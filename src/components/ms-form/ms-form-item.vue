@@ -9,6 +9,7 @@
 </template>
 
 <script>
+import {broadcast} from '@/utils/index'
 import Schema from 'async-validator';
 export default {
     name:'msFormItem',
@@ -28,25 +29,32 @@ export default {
             errorMsg:''
         }
     },
+    mounted(){
+        broadcast(this,'msForm')&&broadcast(this,'msForm').$emit('addFiled',this)
+    },
     methods:{
          inputHandle(){
-
+            this.validate('change')
          },
          blurHandle(){
-            this.validate()
+            this.validate('blur')
          },
-         validate(){
-            const  descriptor = {[this.prop] :this.form.rules[this.prop]}
+         validate(type="blur"){
+            const rules = this.form.rules[this.prop]
+            const rule = rules.filter(r=>{
+               return  r.trigger&&r.trigger ===type
+            })
+            if(!rule.length){
+                return true
+            }
+            const  descriptor = {[this.prop] :rule}
             const validator = new Schema(descriptor);
             var model = {
                 [this.prop]:this.form.model[this.prop]
             }
-        validator.validate(model, { firstFields: true }, errors => {
-
-        this. errorMsg = errors ? errors[0].message : '';
-
-       
-      })
+            return  validator.validate(model, { firstFields: true }, errors => {
+                this. errorMsg = errors ? errors[0].message : '';
+            })
 
          }
 
